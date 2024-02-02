@@ -6,14 +6,11 @@ NOTE: it currently uses langchain4j 0.25
 
 # Using it
 
-## Build
+Set your OpenAI key in the `quarkus.langchain4j.openai.api-key` property of `application.properties`.
+The same thing can also be accomplished by using the `QUARKUS_LANGCHAIN4J_OPENAI_API_KEY` environment variable
 
 ```bash
-mvn package
+mvn quarkus:dev
 ```
 
-## Run
-
-```bash
-java -jar target/quarkus-app/quarkus-run.jar
-```
+and then simply open `http://localhost:8080`
