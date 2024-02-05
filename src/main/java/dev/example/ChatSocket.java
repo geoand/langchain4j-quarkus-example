@@ -3,6 +3,7 @@ package dev.example;
 import io.quarkiverse.langchain4j.ChatMemoryRemover;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class ChatSocket {
             public void run() {
                 try {
                     session.getBasicRemote().sendText("[User]: " + userMessage);
-                    session.getBasicRemote().sendText("[Agent]: " + agent.chat(userMessage));
+                    session.getBasicRemote().sendText("[Agent]: " + agent.chat(session, userMessage));
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } catch (Exception e) {
