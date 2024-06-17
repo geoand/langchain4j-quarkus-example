@@ -1,65 +1,62 @@
 package dev.example;
 
-import static dev.langchain4j.data.document.loader.UrlDocumentLoader.load;
-import static dev.langchain4j.model.openai.OpenAiModelName.GPT_3_5_TURBO;
+import static dev.langchain4j.data.document.splitter.DocumentSplitters.recursive;
 import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.loader.UrlDocumentLoader;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.openai.OpenAiTokenizer;
-import dev.langchain4j.retriever.EmbeddingStoreRetriever;
+import dev.langchain4j.rag.DefaultRetrievalAugmentor;
+import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import io.quarkus.logging.Log;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.io.IOException;
+import jakarta.enterprise.event.Observes;
 import java.net.URL;
+import java.util.function.Supplier;
 
 public class Beans {
 
     @ApplicationScoped
-    EmbeddingStoreRetriever retriever(EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
-
-        // You will need to adjust these parameters to find the optimal setting, which will depend on two main factors:
-        // - The nature of your data
-        // - The embedding model you are using
-        int maxResultsRetrieved = 1;
-        double minScore = 0.6;
-
-        return EmbeddingStoreRetriever.from(embeddingStore, embeddingModel, maxResultsRetrieved, minScore);
+    EmbeddingStore<TextSegment> inMemoryChatMemoryStore() {
+        return new InMemoryEmbeddingStore<>();
     }
 
     @ApplicationScoped
-    EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel) throws IOException {
+    Supplier<RetrievalAugmentor> retrievalAugmentorSupplier(EmbeddingStore<TextSegment> store, EmbeddingModel model) {
+        var retriever = EmbeddingStoreContentRetriever.builder()
+                .embeddingModel(model)
+                .embeddingStore(store)
+                .maxResults(1)
+                .minScore(0.6)
+                .build();
 
-        // Normally, you would already have your embedding store filled with your data.
-        // However, for the purpose of this demonstration, we will:
+        return () -> DefaultRetrievalAugmentor.builder()
+                .contentRetriever(retriever)
+                .build();
+    }
 
-        // 1. Create an in-memory embedding store
-        EmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
-
-        // 2. Load an example document ("Miles of Smiles" terms of use)
+    public void ingest(@Observes StartupEvent event,
+                       EmbeddingStore<TextSegment> store,
+                       EmbeddingModel embeddingModel) {
         String documentName = "miles-of-smiles-terms-of-use.txt";
         URL resource = Thread.currentThread().getContextClassLoader().getResource(documentName);
         if (resource == null) {
             throw new IllegalStateException("Unable to locate document: '" + documentName + "' on the classpath");
         }
-        Document document = load(resource, new TextDocumentParser());
 
-        // 3. Split the document into segments 100 tokens each
-        // 4. Convert segments into embeddings
-        // 5. Store embeddings into embedding store
-        // All this can be done manually, but we will use EmbeddingStoreIngestor to automate this:
-        DocumentSplitter documentSplitter = DocumentSplitters.recursive(100, 0, new OpenAiTokenizer(GPT_3_5_TURBO));
-        EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
-                .documentSplitter(documentSplitter)
+        Log.infof("Ingesting documents...");
+        Document document = UrlDocumentLoader.load(resource, new TextDocumentParser());
+        var ingestor = EmbeddingStoreIngestor.builder()
+                .embeddingStore(store)
                 .embeddingModel(embeddingModel)
-                .embeddingStore(embeddingStore)
+                .documentSplitter(recursive(500, 0))
                 .build();
         ingestor.ingest(document);
-
-        return embeddingStore;
+        Log.infof("Ingested document");
     }
 }

@@ -1,106 +1,71 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Quarkus Langchain4j Chat!</title>
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" type="image/png" href="favicon.ico">
+
+    <script src="/_importmap/dynamic-importmap.js"></script>
+
+    <script type="module">
+        import 'components/demo-title.js';
+        import 'components/demo-chat.js';
+        import 'wc-chatbot';
+    </script>
+
+    <link rel="stylesheet" href="fonts/red-hat-font.min.css">
+
+    <title>ChatBot</title>
 
     <style>
-        #chat {
-          resize: none;
-          overflow: hidden;
-          min-height: 300px;
-          max-height: 300px;
-      }
+        :root {
+            --main-bg-color: hsla(0, 0%, 100%, 0.21);
+            --main-highlight-text-color: #e13245;
+        }
+
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100vh;
+            font-family: 'Red Hat Text', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--main-bg-color);
+        }
+
+        chat-bot {
+            --chatbot-avatar-bg-color: var(--main-highlight-text-color);
+            --chatbot-avatar-margin: 10%;
+            --chatbot-header-bg-color: var(--main-highlight-text-color);;
+            --chatbot-header-title-color: #FFFFFF;
+            --chatbot-body-bg-color: var(--main-bg-color);
+            --chatbot-send-button-color: var(--main-highlight-text-color);;
+        }
+
+        .middle {
+            margin-top: 2em;
+            overflow: hidden;
+            width: 50%;
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+        }
+
     </style>
 </head>
 
 <body>
-        <nav class="navbar navbar-default navbar-pf" role="navigation">
-                <div class="navbar-header">                  
-                  <a class="navbar-brand" href="/">
-                   <p><strong>>> Mile of smiles chatbot</strong></p>
-                  </a>
-                </div>
-        </nav>
-    <div class="container">
-      <br/>
-      <div class="row">
-          <textarea class="col-md-8" id="chat"></textarea>
-      </div>
-      <div class="row">
-          <input class="col-md-6" id="msg" type="text" placeholder="enter your message">
-          <button class="col-md-1 btn btn-primary" id="send" type="button" disabled>send</button>
-      </div>
-      
-      </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"></script>
+<demo-title></demo-title>
 
-    <script type="text/javascript">
-      var connected = false;
-      var socket;
+<div class="middle">
+    <demo-chat>
+        <chat-bot></chat-bot>
+    </demo-chat>
+</div>
 
-      $( document ).ready(function() {
-          connect();
-          $("#send").click(sendMessage);
-
-          $("#name").keypress(function(event){
-              if(event.keyCode == 13 || event.which == 13) {
-                  connect();
-              }
-          });
-
-          $("#msg").keypress(function(event) {
-              if(event.keyCode == 13 || event.which == 13) {
-                  sendMessage();
-              }
-          });
-
-        $("#chat").change(function() {
-            scrollToBottom();
-          });
-
-          $("#name").focus();
-      });
-
-      var connect = function() {
-          if (! connected) {
-              socket = new WebSocket("ws://" + location.host + "/chat");
-              socket.onopen = function() {
-                  connected = true;
-                  console.log("Connected to the web socket");
-                  $("#send").attr("disabled", false);
-                  $("#connect").attr("disabled", true);
-                  $("#name").attr("disabled", true);
-                  $("#msg").focus();
-              };
-              socket.onmessage =function(m) {
-                  console.log("Got message: " + m.data);
-                  $("#chat").append(m.data + "\n");
-                  scrollToBottom();
-              };
-          }
-      };
-
-      var sendMessage = function() {
-          if (connected) {
-              var value = $("#msg").val();
-              console.log("Sending " + value);
-              socket.send(value);
-              $("#msg").val("");
-          }
-      };
-
-      var scrollToBottom = function () {
-        $('#chat').scrollTop($('#chat')[0].scrollHeight);
-      };
-
-    </script>
 </body>
 
 </html>
