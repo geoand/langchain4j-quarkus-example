@@ -1,12 +1,12 @@
 package dev.example;
 
-import dev.langchain4j.retriever.EmbeddingStoreRetriever;
-import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
+import jakarta.enterprise.context.SessionScoped;
 
-@RegisterAiService(tools = BookingTools.class, retriever = EmbeddingStoreRetriever.class)
+@RegisterAiService(tools = BookingTools.class)
+@SessionScoped
 interface CustomerSupportAgent {
 
     @SystemMessage({
@@ -15,5 +15,5 @@ interface CustomerSupportAgent {
             "booking number, customer name and surname.",
             "Today is {{current_date}}."
     })
-    String chat(@MemoryId Object session, @UserMessage String userMessage);
+    String chat(@UserMessage String userMessage);
 }
