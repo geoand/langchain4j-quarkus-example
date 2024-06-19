@@ -27,7 +27,7 @@ public class Beans {
     }
 
     @ApplicationScoped
-    Supplier<RetrievalAugmentor> retrievalAugmentorSupplier(EmbeddingStore<TextSegment> store, EmbeddingModel model) {
+    RetrievalAugmentor retrievalAugmentorSupplier(EmbeddingStore<TextSegment> store, EmbeddingModel model) {
         var retriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingModel(model)
                 .embeddingStore(store)
@@ -35,9 +35,7 @@ public class Beans {
                 .minScore(0.6)
                 .build();
 
-        return () -> DefaultRetrievalAugmentor.builder()
-                .contentRetriever(retriever)
-                .build();
+        return DefaultRetrievalAugmentor.builder().contentRetriever(retriever).build();
     }
 
     public void ingest(@Observes StartupEvent event,
